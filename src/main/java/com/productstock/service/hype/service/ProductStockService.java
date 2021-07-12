@@ -44,4 +44,44 @@ public class ProductStockService {
       return productStockRepository.save(newProductStock);
     }
   }
+
+  public ProductStock reserve(String productId, String value) {
+    Optional<ProductStock> productStock = productStockRepository.findById(productId);
+    if (productStock.isPresent() && productStock.get().getStockCount() > 0) {
+      var existingStock = productStock.get();
+      existingStock.setReserveCount(existingStock.getReserveCount() + 1);
+      existingStock.setStockCount(existingStock.getStockCount() - 1);
+      existingStock.getReservationTokens().add(value);
+      log.info("Reserved!!");
+      return productStockRepository.save(existingStock);
+    }
+    return null;
+  }
+
+  public ProductStock unReserve(String productId, String value) {
+    Optional<ProductStock> productStock = productStockRepository.findById(productId);
+    if (productStock.isPresent() && productStock.get().getReservationTokens().contains(value)) {
+      var existingStock = productStock.get();
+      existingStock.setReserveCount(existingStock.getReserveCount() - 1);
+      existingStock.setStockCount(existingStock.getStockCount() + 1);
+      existingStock.getReservationTokens().remove(value);
+      log.info("UnReserved!!");
+      return productStockRepository.save(existingStock);
+    }
+    return null;
+  }
+
+  public ProductStock sold(String productId, String value) {
+    Optional<ProductStock> productStock = productStockRepository.findById(productId);
+    if (productStock.isPresent() && productStock.get().getReservationTokens().contains(value)) {
+      var existingStock = productStock.get();
+      existingStock.setReserveCount(existingStock.getReserveCount() - 1);
+      existingStock.setStockCount(existingStock.getStockCount());
+      existingStock.setSoldCount(existingStock.getSoldCount() + 1);
+      existingStock.getReservationTokens().remove(value);
+      log.info("Sold!!");
+      return productStockRepository.save(existingStock);
+    }
+    return null;
+  }
 }
